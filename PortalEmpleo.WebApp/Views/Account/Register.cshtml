@@ -1,0 +1,143 @@
+﻿@model PortalEmpleo.WebApp.Models.ViewModels.Account.RegisterViewModel
+
+@{
+    ViewData["Title"] = "Registro";
+    Layout = "_Layout"; 
+}
+
+<div class="container-fluid px-4 fade-in">
+    <div class="row align-items-center py-5 bg-light rounded-3 mb-4">
+        <div class="col-md-8 col-lg-7 mx-auto">
+            <div class="card shadow-lg border-0 rounded-lg">
+                <div class="card-header bg-primary text-white text-center py-4">
+                    <a href="/" class="text-white text-decoration-none">
+                        <i class="fas fa-briefcase fa-2x d-block mb-2"></i>
+                        <h4 class="mb-0">Portal Empleo</h4>
+                    </a>
+                </div>
+                <div class="card-body p-4">
+                    <h5 class="text-center mb-4 text-muted">Crea tu cuenta en Portal Empleo</h5>
+
+                    <div id="message-container"></div>
+
+                    <form id="registerForm" asp-controller="Account" asp-action="Register" method="post" class="needs-validation" novalidate>
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger shadow-sm" role="alert"></div>
+
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="NombreUsuario" class="form-control form-control-lg" placeholder="Usuario" required />
+                                    <label asp-for="NombreUsuario">
+                                        <i class="fas fa-user me-2 text-primary"></i>Usuario
+                                    </label>
+                                    <span asp-validation-for="NombreUsuario" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="Contraseña" type="password" class="form-control form-control-lg" placeholder="Contraseña" required />
+                                    <label asp-for="Contraseña">
+                                        <i class="fas fa-lock me-2 text-primary"></i>Contraseña
+                                    </label>
+                                    <span asp-validation-for="Contraseña" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="Nombre" class="form-control form-control-lg" placeholder="Nombre" required />
+                                    <label asp-for="Nombre">
+                                        <i class="fas fa-user-tag me-2 text-primary"></i>Nombre
+                                    </label>
+                                    <span asp-validation-for="Nombre" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="Apellido" class="form-control form-control-lg" placeholder="Apellido" required />
+                                    <label asp-for="Apellido">
+                                        <i class="fas fa-user-tag me-2 text-primary"></i>Apellido
+                                    </label>
+                                    <span asp-validation-for="Apellido" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="form-floating">
+                                    <input asp-for="Email" type="email" class="form-control form-control-lg" placeholder="Email" required />
+                                    <label asp-for="Email">
+                                        <i class="fas fa-envelope me-2 text-primary"></i>Email
+                                    </label>
+                                    <span asp-validation-for="Email" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="form-floating">
+                                    <select asp-for="RolId" class="form-select form-select-lg" required>
+                                        <option value="">Seleccione un rol</option>
+                                        <option value="2">Reclutador</option>
+                                        <option value="3">Candidato</option>
+                                    </select>
+                                    <label asp-for="RolId">
+                                        <i class="fas fa-users-cog me-2 text-primary"></i>Tipo de Usuario
+                                    </label>
+                                    <span asp-validation-for="RolId" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg shadow" id="submitButton">
+                                <i class="fas fa-user-plus me-2"></i>Crear Cuenta
+                            </button>
+                        </div>
+
+                        <div class="text-center mt-4">
+                            <div class="d-flex align-items-center justify-content-center mb-4">
+                                <div class="border-bottom flex-grow-1"></div>
+                                <span class="px-3 text-muted">¿Ya tienes cuenta?</span>
+                                <div class="border-bottom flex-grow-1"></div>
+                            </div>
+                            <a asp-controller="Account" asp-action="Login" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-sign-in-alt me-2"></i>Iniciar Sesión
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/4.0.0/jquery.validate.unobtrusive.min.js"></script>
+    }
+    <script>
+        $(document).ready(function () {
+            PortalEmpleo.validateForm('registerForm', {
+                rules: {
+                    NombreUsuario: { required: true, minlength: 3 },
+                    Contraseña: { required: true, minlength: 6 },
+                    Email: { required: true, email: true },
+                    RolId: { required: true }
+                },
+                submitHandler: function(form) {
+                    const submitBtn = $('#submitButton');
+                    submitBtn.prop('disabled', true)
+                        .html('<i class="fas fa-spinner fa-spin me-2"></i>Creando cuenta...');
+
+                    form.submit();
+                }
+            });
+
+            // Animaciones en hover
+            $('.form-control, .form-select').hover(
+                function() { $(this).parent().addClass('shadow'); },
+                function() { $(this).parent().removeClass('shadow'); }
+            );
+        });
+    </script>
+}

@@ -1,0 +1,112 @@
+﻿@model PortalEmpleo.WebApp.Models.ViewModels.JobOffers.JobOfferCreateEditViewModel
+
+@{
+    ViewData["Title"] = "Editar Oferta";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid px-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-1">@ViewData["Title"]</h2>
+            <p class="text-muted mb-0">
+                Modifique los campos necesarios para actualizar la oferta
+            </p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <partial name="_JobOfferForm" model="Model" />
+        </div>
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history text-primary me-2"></i>Historial
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Fecha de publicación:</small>
+                        <p class="mb-0">
+                            <i class="fas fa-calendar-alt me-2"></i>
+                            @Model.FechaPublicacion?.ToString("dd/MM/yyyy HH:mm")
+                        </p>
+                    </div>
+                    @if (Model.FechaActualizacion.HasValue)
+                    {
+                        <div>
+                            <small class="text-muted d-block">Última actualización:</small>
+                            <p class="mb-0">
+                                <i class="fas fa-clock me-2"></i>
+                                @Model.FechaActualizacion?.ToString("dd/MM/yyyy HH:mm")
+                            </p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('jobOfferForm');
+
+            // Inicializar validación
+            PortalEmpleo.validateForm('jobOfferForm', {
+                showMessages: false
+            });
+
+            // Manejar envío del formulario
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                const submitButton = document.getElementById('submitButton');
+                submitButton.disabled = true;
+
+                try {
+                    const formData = new FormData(form);
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const result = await response.json();
+
+                    if (result.exito) {
+                        PortalEmpleo.showToast('Oferta actualizada exitosamente', 'success');
+                        setTimeout(() => {
+                            window.location.href = '/JobOffers/Index';
+                        }, 1500);
+                    } else {
+                        PortalEmpleo.showToast(
+                            result.detalle || 'Error al actualizar la oferta',
+                            'error'
+                        );
+                        submitButton.disabled = false;
+                    }
+                } catch (error) {
+                    PortalEmpleo.showToast('Error al procesar la solicitud', 'error');
+                    submitButton.disabled = false;
+                }
+            });
+
+            // Editor enriquecido para la descripción
+            if (typeof tinymce !== 'undefined') {
+                tinymce.init({
+                    selector: '#Descripcion',
+                    height: 300,
+                    menubar: false,
+                    plugins: 'lists link',
+                    toolbar: 'bold italic | bullist numlist | link'
+                });
+            }
+        });
+    </script>
+}

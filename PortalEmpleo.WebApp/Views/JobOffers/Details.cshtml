@@ -1,0 +1,258 @@
+﻿@model PortalEmpleo.WebApp.Models.ViewModels.JobOffers.JobOfferViewModel
+@inject PortalEmpleo.WebApp.Services.Interfaces.IAuthService AuthService
+
+@{
+    ViewData["Title"] = "Detalles de la Oferta";
+    Layout = "_Layout";
+    var currentUser = await AuthService.GetCurrentUserAsync();
+    var isRecruiter = currentUser?.Rol == "Reclutador";
+    var isOwner = isRecruiter && currentUser?.IdUsuario == Model.IdReclutador;
+}
+
+<div class="container-fluid px-4 fade-in">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-action="Index">Ofertas</a></li>
+                    <li class="breadcrumb-item active">@Model.Titulo</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Detalles principales -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3 class="mb-0">@Model.Titulo</h3>
+                        @if (isOwner)
+                        {
+                            <div class="btn-group">
+                                <a asp-action="Edit" asp-route-id="@Model.IdOferta"
+                                   class="btn btn-outline-primary">
+                                    <i class="fas fa-edit me-2"></i>Editar
+                                </a>
+                                <button type="button" class="btn btn-outline-danger"
+                                        data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                    <i class="fas fa-trash me-2"></i>Eliminar
+                                </button>
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Información básica -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <small class="text-muted d-block">Ubicación</small>
+                                <p class="mb-0">
+                                    <i class="fas fa-map-marker-alt text-danger me-2"></i>
+                                    @Model.Ubicacion
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <small class="text-muted d-block">Tipo de Contrato</small>
+                                <p class="mb-0">
+                                    <i class="fas fa-file-contract text-primary me-2"></i>
+                                    @Model.TipoContrato
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Descripción -->
+                    <div class="mb-4">
+                        <h4 class="mb-3">Descripción del Puesto</h4>
+                        <div class="description-content">
+                            @Html.Raw(Model.Descripcion)
+                        </div>
+                    </div>
+
+                    <!-- Información adicional -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            @if (Model.Salario.HasValue)
+                            {
+                                <div class="mb-3">
+                                    <small class="text-muted d-block">Salario</small>
+                                    <p class="mb-0">
+                                        <i class="fas fa-money-bill-wave text-success me-2"></i>
+                                        @Model.Salario.Value.ToString("C")
+                                    </p>
+                                </div>
+                            }
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <small class="text-muted d-block">Fecha de Publicación</small>
+                                <p class="mb-0">
+                                    <i class="fas fa-calendar-alt text-info me-2"></i>
+                                    @Model.FechaPublicacion.ToString("dd/MM/yyyy")
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Información del Reclutador -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-building text-primary me-2"></i>
+                        Información de la Empresa
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <h6 class="mb-3">@Model.NombreReclutador</h6>
+                    @if (!isRecruiter)
+                    {
+                        <button type="button" class="btn btn-primary w-100"
+                                data-bs-toggle="modal" data-bs-target="#applyModal">
+                            <i class="fas fa-paper-plane me-2"></i>Postularme
+                        </button>
+                    }
+                </div>
+            </div>
+
+            <!-- Estado de la oferta -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle text-info me-2"></i>
+                        Estado de la Oferta
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <span class="badge bg-@(Model.Estado == "Activa" ? "success" : "secondary") mb-3">
+                        @Model.Estado
+                    </span>
+                    <p class="text-muted mb-0">
+                        Esta oferta está actualmente @(Model.Estado.ToLower())
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Postulación -->
+@if (!isRecruiter)
+{
+    <div class="modal fade" id="applyModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Postularme a la Oferta</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="applicationForm" asp-controller="Application" asp-action="Apply">
+                    <div class="modal-body">
+                        <input type="hidden" name="IdOferta" value="@Model.IdOferta" />
+
+                        <div class="mb-3">
+                            <label class="form-label">Nombre Completo</label>
+                            <input type="text" name="Nombre" class="form-control" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="Email" class="form-control" required />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="submitApplication">
+                            <i class="fas fa-paper-plane me-2"></i>Enviar Postulación
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Modal de Eliminación -->
+@if (isOwner)
+{
+    <div class="modal fade" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar Eliminación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Está seguro que desea eliminar esta oferta?</p>
+                    <p class="text-muted mb-0">Esta acción no se puede deshacer.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <form asp-action="Delete" asp-route-id="@Model.IdOferta" method="post">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash me-2"></i>Eliminar
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Manejar el formulario de postulación
+            const applicationForm = document.getElementById('applicationForm');
+            if (applicationForm) {
+                applicationForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+
+                    const submitButton = document.getElementById('submitApplication');
+                    submitButton.disabled = true;
+
+                    try {
+                        const formData = new FormData(applicationForm);
+                        const response = await fetch(applicationForm.action, {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        const result = await response.json();
+
+                        if (result.exito) {
+                            PortalEmpleo.showToast('Postulación enviada exitosamente', 'success');
+                            $('#applyModal').modal('hide');
+                            applicationForm.reset();
+                        } else {
+                            PortalEmpleo.showToast(
+                                result.detalle || 'Error al enviar la postulación',
+                                'error'
+                            );
+                        }
+                    } catch (error) {
+                        PortalEmpleo.showToast('Error al procesar la solicitud', 'error');
+                    } finally {
+                        submitButton.disabled = false;
+                    }
+                });
+            }
+
+            // Tooltips
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+    </script>
+}
