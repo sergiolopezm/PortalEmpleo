@@ -1,8 +1,21 @@
 ﻿@model PortalEmpleo.WebApp.Models.ViewModels.JobOffers.JobOfferListViewModel
 
-@{
+@* @{
     ViewData["Title"] = "Mis Ofertas";
     Layout = "_Layout";
+} *@
+
+@{
+    ViewData["Title"] = "Mis Ofertas";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@if (Model == null)
+{
+    <div class="alert alert-danger">
+        <h4>El modelo es nulo</h4>
+    </div>
+    return;
 }
 
 <div class="container-fluid px-4 fade-in">

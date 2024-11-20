@@ -1,4 +1,5 @@
-﻿using PortalEmpleo.Shared.GeneralDTO;
+﻿using PortalEmpleo.Domain.Contracts;
+using PortalEmpleo.Shared.GeneralDTO;
 using PortalEmpleo.Shared.InDTO.OfertaEmpleo;
 using PortalEmpleo.WebApp.Services.Interfaces;
 
@@ -7,10 +8,12 @@ namespace PortalEmpleo.WebApp.Services.Implementation
     public class JobOfferService : IJobOfferService
     {
         private readonly IApiClient _apiClient;
+        private readonly ILogRepository _logRepository;
 
-        public JobOfferService(IApiClient apiClient)
+        public JobOfferService(IApiClient apiClient,  ILogRepository logRepository)
         {
             _apiClient = apiClient;
+            _logRepository = logRepository;
         }
 
         public async Task<RespuestaDto> CreateJobOfferAsync(OfertaEmpleoDto oferta)
@@ -45,8 +48,17 @@ namespace PortalEmpleo.WebApp.Services.Implementation
 
         public async Task<RespuestaDto> ListRecruiterJobOffersAsync(string idReclutador, int pagina = 1, int tamanoPagina = 10)
         {
-            return await _apiClient.GetAsync<RespuestaDto>(
-                $"api/OfertaEmpleo/reclutador/{idReclutador}?pagina={pagina}&tamanoPagina={tamanoPagina}");
+            try
+            {
+                // Corregir la URL 
+                string endpoint = $"api/OfertaEmpleo/reclutador/{idReclutador}?pagina={pagina}&tamanoPagina={tamanoPagina}";
+                return await _apiClient.GetAsync<RespuestaDto>(endpoint);
+            }
+            catch (Exception ex)
+            {                
+                _logRepository.Error(null, null, "Error al obtener las ofertas de empleo del reclutador", ex.Message);
+                return RespuestaDto.ErrorInterno();
+            }
         }
     }
 }

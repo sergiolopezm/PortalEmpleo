@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using PortalEmpleo.Domain.Contracts;
 using PortalEmpleo.Shared.InDTO;
 using PortalEmpleo.WebApp.Models.ViewModels.Account;
 using PortalEmpleo.WebApp.Services.Interfaces;
@@ -9,10 +10,12 @@ namespace PortalEmpleo.WebApp.Controllers
     public class AccountController : Controller
     {
         private readonly IAuthService _authService;
+        private readonly ILogRepository _logRepository;
 
-        public AccountController(IAuthService authService)
+        public AccountController(IAuthService authService, ILogRepository logRepository)
         {
             _authService = authService;
+            _logRepository = logRepository;
         }
 
         [HttpGet]
@@ -43,13 +46,12 @@ namespace PortalEmpleo.WebApp.Controllers
 
             if (result.Exito)
             {
-                // Obtener el usuario actual después del login
                 var currentUser = await _authService.GetCurrentUserAsync();
 
-                // Redirigir según el rol
                 if (currentUser?.Rol == "Reclutador")
                 {
-                    return RedirectToAction("MyOffers", "JobOffers");
+                    // Cambiamos a redirección a Index
+                    return RedirectToAction("Index", "JobOffers");
                 }
 
                 return RedirectToAction("Index", "Home");
