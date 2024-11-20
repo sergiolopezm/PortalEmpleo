@@ -1,40 +1,72 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PortalEmpleo.Domain.Contracts;
+using PortalEmpleo.Domain.Services;
 using PortalEmpleo.Shared.InDTO.OfertaEmpleo;
 using PortalEmpleo.WebApp.Models.ViewModels.JobOffers;
 using PortalEmpleo.WebApp.Services.Interfaces;
 
 namespace PortalEmpleo.WebApp.Controllers
 {
-    [Authorize(Policy = "RequireReclutador")]
+    
     public class JobOffersController : Controller
     {
         private readonly IJobOfferService _jobOfferService;
         private readonly IAuthService _authService;
+        private readonly ILogRepository _logRepository;
 
         public JobOffersController(
             IJobOfferService jobOfferService,
-            IAuthService authService)
+            IAuthService authService,
+            ILogRepository logRepository)
         {
             _jobOfferService = jobOfferService;
             _authService = authService;
+            _logRepository = logRepository;
         }
 
         // GET: JobOffers
         public async Task<IActionResult> Index(JobOfferSearchViewModel searchModel)
         {
-            var resultado = await _jobOfferService.ListJobOffersAsync(
+            var currentUser = await _authService.GetCurrentUserAsync();
+
+            // Si es reclutador, mostrar sus ofertas
+            if (currentUser?.Rol == "Reclutador")
+            {
+                var resultado = await _jobOfferService.ListRecruiterJobOffersAsync(
+                    currentUser.IdUsuario,
+                    searchModel?.CurrentPage ?? 1,
+                    searchModel?.PageSize ?? 10);
+
+                if (!resultado.Exito)
+                {
+                    TempData["ErrorMessage"] = resultado.Detalle;
+                    return View(new JobOfferSearchViewModel());
+                }
+
+                var viewModel = new JobOfferSearchViewModel
+                {
+                    CurrentPage = searchModel?.CurrentPage ?? 1,
+                    PageSize = searchModel?.PageSize ?? 10,
+                    Results = (JobOfferListViewModel)resultado.Resultado
+                };
+
+                return View("MyOffers", viewModel.Results);
+            }
+
+            // Si no es reclutador, mostrar todas las ofertas
+            var resultadoGeneral = await _jobOfferService.ListJobOffersAsync(
                 searchModel.CurrentPage,
                 searchModel.PageSize,
                 searchModel.SearchTerm);
 
-            if (!resultado.Exito)
+            if (!resultadoGeneral.Exito)
             {
-                TempData["ErrorMessage"] = resultado.Detalle;
+                TempData["ErrorMessage"] = resultadoGeneral.Detalle;
                 return View(new JobOfferSearchViewModel());
             }
 
-            searchModel.Results = (JobOfferListViewModel)resultado.Resultado;
+            searchModel.Results = (JobOfferListViewModel)resultadoGeneral.Resultado;
             return View(searchModel);
         }
 
@@ -188,24 +220,45 @@ namespace PortalEmpleo.WebApp.Controllers
         }
 
         // GET: JobOffers/MyOffers
-        [Authorize]
+        [Authorize(Roles = "Reclutador")]
         public async Task<IActionResult> MyOffers(int page = 1)
         {
-            var user = _authService.GetCurrentUserAsync().Result;
-            if (user?.Rol != "Reclutador")
+            try
             {
+                var user = await _authService.GetCurrentUserAsync();
+                if (user == null)
+                {
+                    return RedirectToAction("Login", "Account");
+                }
+
+                if (user.Rol != "Reclutador")
+                {
+                    return RedirectToAction(nameof(Index));
+                }
+
+                var resultado = await _jobOfferService.ListRecruiterJobOffersAsync(user.IdUsuario, page, 10);
+
+                if (!resultado.Exito)
+                {
+                    TempData["ErrorMessage"] = resultado.Detalle;
+                    return RedirectToAction(nameof(Index));
+                }
+
+                _logRepository.Info(user.IdUsuario,
+                    HttpContext.Connection.RemoteIpAddress?.ToString(),
+                    "MyOffers",
+                    $"Listado de ofertas obtenido exitosamente para el reclutador {user.NombreUsuario}");
+
+                return View((JobOfferListViewModel)resultado.Resultado);
+            }
+            catch (Exception ex)
+            {
+                _logRepository.Error(null,
+                    HttpContext.Connection.RemoteIpAddress?.ToString(),
+                    "MyOffers",
+                    ex.Message);
                 return RedirectToAction(nameof(Index));
             }
-
-            var resultado = await _jobOfferService.ListRecruiterJobOffersAsync(user.IdUsuario, page, 10);
-
-            if (!resultado.Exito)
-            {
-                TempData["ErrorMessage"] = resultado.Detalle;
-                return RedirectToAction(nameof(Index));
-            }
-
-            return View((JobOfferListViewModel)resultado.Resultado);
         }
     }
 }

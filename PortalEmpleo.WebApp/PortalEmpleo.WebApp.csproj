@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\PortalEmpleo.Domain\PortalEmpleo.Domain.csproj" />
     <ProjectReference Include="..\PortalEmpleo.Shared\PortalEmpleo.Shared.csproj" />
     <ProjectReference Include="..\PortalEmpleo.Util\PortalEmpleo.Util.csproj" />
   </ItemGroup>

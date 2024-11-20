@@ -4,8 +4,16 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using PortalEmpleo.WebApp.Services.Implementation;
 using PortalEmpleo.WebApp.Services.Interfaces;
+using PortalEmpleo.Domain.Contracts;
+using PortalEmpleo.Domain.Services;
+using PortalEmpleo.Infraestructure;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Agregar esta configuración antes de registrar los servicios
+builder.Services.AddDbContext<DBContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Add services to the container.
 builder.Services.AddControllersWithViews()
@@ -74,6 +82,7 @@ builder.Services.AddHttpClient<IApiClient, ApiClient>((serviceProvider, client) 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IJobOfferService, JobOfferService>();
 builder.Services.AddScoped<IApplicationService, ApplicationService>();
+builder.Services.AddScoped<ILogRepository, LogRepository>();
 
 builder.Services.AddMvc().AddJsonOptions(options =>
 {
