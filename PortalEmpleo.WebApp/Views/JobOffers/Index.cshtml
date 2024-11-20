@@ -1,0 +1,201 @@
+﻿@model PortalEmpleo.WebApp.Models.ViewModels.JobOffers.JobOfferSearchViewModel
+@inject PortalEmpleo.WebApp.Services.Interfaces.IAuthService AuthService
+
+@{
+    ViewData["Title"] = "Ofertas de Empleo";
+    Layout = "_Layout";
+    var currentUser = await AuthService.GetCurrentUserAsync();
+}
+
+<div class="container-fluid px-4 fade-in">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">@ViewData["Title"]</h2>
+            <p class="text-muted mb-0">
+                Explora las últimas oportunidades laborales disponibles
+            </p>
+        </div>
+        @if (currentUser?.Rol == "Reclutador")
+        {
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="fas fa-plus-circle me-2"></i>Crear Nueva Oferta
+            </a>
+        }
+    </div>
+
+    <!-- Search Section -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form id="searchForm" method="get" class="row g-3">
+                <div class="col-md-8">
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" name="SearchTerm"
+                               class="form-control"
+                               placeholder="Buscar por título, descripción o ubicación..."
+                               value="@Model.SearchTerm">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search me-2"></i>Buscar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <div id="results-container">
+        @if (Model.Results?.Ofertas != null && Model.Results.Ofertas.Any())
+        {
+            <div class="row">
+                @foreach (var oferta in Model.Results.Ofertas)
+                {
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card h-100 shadow-hover">
+                            <div class="card-header bg-white">
+                                <h5 class="card-title mb-0 text-primary">
+                                    @oferta.Titulo
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <p class="text-muted mb-2">
+                                        <i class="fas fa-building me-2"></i>@oferta.NombreReclutador
+                                    </p>
+                                    <p class="text-muted mb-2">
+                                        <i class="fas fa-map-marker-alt me-2"></i>@oferta.Ubicacion
+                                    </p>
+                                    <p class="text-muted mb-0">
+                                        <i class="fas fa-clock me-2"></i>@oferta.TipoContrato
+                                    </p>
+                                </div>
+
+                                <p class="card-text">
+                                    @(oferta.Descripcion.Length > 150
+                                        ? oferta.Descripcion.Substring(0, 150) + "..."
+                                        : oferta.Descripcion)
+                                </p>
+
+                                <div class="d-flex align-items-center mt-3">
+                                    @if (oferta.Salario.HasValue)
+                                    {
+                                        <span class="badge bg-success me-2">
+                                            <i class="fas fa-money-bill-wave me-1"></i>
+                                            @oferta.Salario.Value.ToString("C")
+                                        </span>
+                                    }
+                                    <span class="badge bg-info">
+                                        <i class="fas fa-calendar-alt me-1"></i>
+                                        @oferta.FechaPublicacion.ToString("dd/MM/yyyy")
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-white">
+                                <div class="d-grid gap-2">
+                                    <a asp-action="Details" asp-route-id="@oferta.IdOferta"
+                                       class="btn btn-outline-primary">
+                                        <i class="fas fa-info-circle me-2"></i>Ver Detalles
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Pagination -->
+            @if (Model.Results.TotalPaginas > 1)
+            {
+                <nav aria-label="Paginación" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        @for (int i = 1; i <= Model.Results.TotalPaginas; i++)
+                        {
+                            <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                <a class="page-link" href="javascript:void(0)"
+                                   onclick="cambiarPagina(@i)">@i</a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            }
+        }
+        else
+        {
+            <div class="card shadow-sm">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h4>No se encontraron ofertas</h4>
+                    <p class="text-muted mb-0">
+                        @if (string.IsNullOrEmpty(Model.SearchTerm))
+                        {
+                            <text>No hay ofertas disponibles en este momento.</text>
+                        }
+                        else
+                        {
+                            <text>No se encontraron ofertas que coincidan con tu búsqueda.</text>
+                        }
+                    </p>
+                    @if (!string.IsNullOrEmpty(Model.SearchTerm))
+                    {
+                        <a href="@Url.Action("Index")" class="btn btn-primary mt-3">
+                            <i class="fas fa-redo me-2"></i>Ver todas las ofertas
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Manejar búsqueda
+            const searchForm = document.getElementById('searchForm');
+            const searchInput = searchForm.querySelector('input[name="SearchTerm"]');
+            let searchTimeout;
+
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    realizarBusqueda();
+                }, 500);
+            });
+
+            searchForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                realizarBusqueda();
+            });
+
+            function realizarBusqueda(pagina = 1) {
+                const searchTerm = searchInput.value;
+
+                PortalEmpleo.showLoader();
+
+                fetch(`${searchForm.action}?searchTerm=${encodeURIComponent(searchTerm)}&currentPage=${pagina}`)
+                    .then(response => response.text())
+                    .then(html => {
+                        document.getElementById('results-container').innerHTML = html;
+                        history.pushState(null, '', `?searchTerm=${encodeURIComponent(searchTerm)}&currentPage=${pagina}`);
+                    })
+                    .catch(error => {
+                        PortalEmpleo.showToast('Error al realizar la búsqueda', 'error');
+                    })
+                    .finally(() => {
+                        PortalEmpleo.hideLoader();
+                    });
+            }
+
+            // Función global para cambio de página
+            window.cambiarPagina = function(pagina) {
+                realizarBusqueda(pagina);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+        });
+    </script>
+}

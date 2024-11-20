@@ -1,0 +1,124 @@
+﻿@model PortalEmpleo.WebApp.Models.ViewModels.Account.LoginViewModel
+
+@{
+    ViewData["Title"] = "Iniciar Sesión";
+    Layout = "_Layout";
+}
+
+<div class="container">
+    <div class="row justify-content-center align-items-center min-vh-75">
+        <div class="col-md-5">
+            <div class="card shadow-lg border-0 rounded-lg fade-in">
+                <div class="card-header bg-primary text-white text-center py-4">
+                    <div class="text-center mb-2">
+                        <i class="fas fa-briefcase fa-2x"></i>
+                    </div>
+                    <h4 class="mb-0">Portal Empleo</h4>
+                </div>
+
+                <div class="card-body p-4">
+                    <h5 class="text-center mb-4">Accede a tu cuenta</h5>
+
+                    <div id="message-container">
+                        @if (!ViewData.ModelState.IsValid)
+                        {
+                            <div class="alert alert-danger">
+                                <div asp-validation-summary="All" class="text-danger"></div>
+                            </div>
+                        }
+                    </div>
+
+                    <form id="loginForm" asp-controller="Account" asp-action="Login" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <div class="form-group mb-4">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-user text-primary"></i>
+                                </span>
+                                <input asp-for="NombreUsuario" class="form-control form-control-lg" placeholder="Usuario" />
+                            </div>
+                            <span asp-validation-for="NombreUsuario" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-lock text-primary"></i>
+                                </span>
+                                <input asp-for="Contraseña" type="password" class="form-control form-control-lg" placeholder="Contraseña" />
+                            </div>
+                            <span asp-validation-for="Contraseña" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-grid mb-4">
+                            <button type="submit" class="btn btn-primary btn-lg" id="submitButton">
+                                <i class="fas fa-sign-in-alt me-2"></i>Iniciar Sesión
+                            </button>
+                        </div>
+
+                        <div class="text-center">
+                            <p class="text-muted mb-0">
+                                ¿No tienes una cuenta?
+                                <a asp-controller="Account" asp-action="Register" class="text-primary fw-bold ms-1">
+                                    Regístrate aquí
+                                </a>
+                            </p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/4.0.0/jquery.validate.unobtrusive.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            $('#loginForm').on('submit', function(e) {
+                e.preventDefault();
+
+                if ($(this).valid()) {
+                    const submitBtn = $('#submitButton');
+                    submitBtn.prop('disabled', true)
+                        .html('<i class="fas fa-spinner fa-spin me-2"></i>Iniciando sesión...');
+
+                    this.submit();
+                }
+            });
+
+            // Validación del formulario
+            $('#loginForm').validate({
+                rules: {
+                    NombreUsuario: {
+                        required: true,
+                        minlength: 3
+                    },
+                    Contraseña: {
+                        required: true,
+                        minlength: 6
+                    }
+                },
+                messages: {
+                    NombreUsuario: {
+                        required: "El usuario es requerido",
+                        minlength: "El usuario debe tener al menos 3 caracteres"
+                    },
+                    Contraseña: {
+                        required: "La contraseña es requerida",
+                        minlength: "La contraseña debe tener al menos 6 caracteres"
+                    }
+                }
+            });
+
+            // Efectos visuales
+            $('.input-group').hover(
+                function() { $(this).addClass('shadow-sm'); },
+                function() { $(this).removeClass('shadow-sm'); }
+            );
+        });
+    </script>
+}

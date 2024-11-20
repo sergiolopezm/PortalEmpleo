@@ -1,0 +1,227 @@
+﻿@inject PortalEmpleo.WebApp.Services.Interfaces.IAuthService AuthService
+@{
+    ViewData["Title"] = "Inicio";
+    Layout = "_Layout";
+    var currentUser = await AuthService.GetCurrentUserAsync();
+}
+
+<div class="container-fluid px-4 fade-in">
+    <!-- Hero Section -->
+    <div class="row align-items-center py-5 bg-light rounded-3 mb-4">
+        <div class="col-lg-6">
+            <h1 class="display-4 fw-bold text-primary mb-3">
+                Portal de Empleo
+            </h1>
+            <p class="lead mb-4">
+                Conectamos talento con oportunidades. Encuentra tu próximo desafío profesional
+                o al candidato ideal para tu empresa.
+            </p>
+            @if (currentUser == null)
+            {
+                <div class="d-grid gap-2 d-md-flex">
+                    <a asp-controller="Account" asp-action="Register" class="btn btn-primary btn-lg px-4 me-md-2">
+                        <i class="fas fa-user-plus me-2"></i>Regístrate
+                    </a>
+                    <a asp-controller="Account" asp-action="Login" class="btn btn-outline-primary btn-lg px-4">
+                        <i class="fas fa-sign-in-alt me-2"></i>Iniciar Sesión
+                    </a>
+                </div>
+            }
+            else if (currentUser.Rol == "Reclutador")
+            {
+                <div class="d-grid gap-2 d-md-flex">
+                    <a asp-controller="JobOffers" asp-action="Create" class="btn btn-primary btn-lg px-4 me-md-2">
+                        <i class="fas fa-plus-circle me-2"></i>Publicar Oferta
+                    </a>
+                    <a asp-controller="JobOffers" asp-action="MyOffers" class="btn btn-outline-primary btn-lg px-4">
+                        <i class="fas fa-list-alt me-2"></i>Mis Ofertas
+                    </a>
+                </div>
+            }
+        </div>
+        <div class="col-lg-6 d-none d-lg-block text-center">
+            <img src="/api/placeholder/600/400" alt="Imagen representativa" class="img-fluid rounded shadow-lg" />
+        </div>
+    </div>
+
+    <!-- Sección Principal -->
+    <div class="row">
+        @if (currentUser?.Rol == "Reclutador")
+        {
+            <!-- Panel de Reclutador -->
+            <div class="col-12">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h4 class="mb-0">
+                            <i class="fas fa-chart-line text-primary me-2"></i>
+                            Resumen de Actividad
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        @if (ViewBag.MisOfertas?.Ofertas != null && ViewBag.MisOfertas.Ofertas.Any())
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Título</th>
+                                            <th>Ubicación</th>
+                                            <th>Fecha</th>
+                                            <th>Estado</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var oferta in ViewBag.MisOfertas.Ofertas)
+                                        {
+                                            <tr>
+                                                <td>@oferta.Titulo</td>
+                                                <td>
+                                                    <i class="fas fa-map-marker-alt text-danger me-1"></i>
+                                                    @oferta.Ubicacion
+                                                </td>
+                                                <td>@oferta.FechaPublicacion.ToString("dd/MM/yyyy")</td>
+                                                <td>
+                                                    <span class="badge bg-@(oferta.Estado == "Activa" ? "success" : "secondary")">
+                                                        @oferta.Estado
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm">
+                                                        <a asp-controller="JobOffers" asp-action="Details"
+                                                           asp-route-id="@oferta.IdOferta"
+                                                           class="btn btn-outline-primary"
+                                                           data-bs-toggle="tooltip"
+                                                           title="Ver detalles">
+                                                            <i class="fas fa-eye"></i>
+                                                        </a>
+                                                        <a asp-controller="Application" asp-action="ListForOffer"
+                                                           asp-route-idOferta="@oferta.IdOferta"
+                                                           class="btn btn-outline-success"
+                                                           data-bs-toggle="tooltip"
+                                                           title="Ver postulaciones">
+                                                            <i class="fas fa-users"></i>
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center py-4">
+                                <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                                <h5>No has publicado ofertas aún</h5>
+                                <p class="text-muted">Comienza publicando tu primera oferta de empleo</p>
+                                <a asp-controller="JobOffers" asp-action="Create" class="btn btn-primary">
+                                    <i class="fas fa-plus-circle me-2"></i>Publicar Oferta
+                                </a>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <!-- Últimas Ofertas para Candidatos -->
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h4 class="mb-0">
+                                <i class="fas fa-briefcase text-primary me-2"></i>
+                                Últimas Ofertas
+                            </h4>
+                            <a asp-controller="JobOffers" asp-action="Index" class="btn btn-outline-primary">
+                                <i class="fas fa-search me-2"></i>Ver todas
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        @if (ViewBag.UltimasOfertas?.Ofertas != null && ViewBag.UltimasOfertas.Ofertas.Any())
+                        {
+                            <div class="row">
+                                @foreach (var oferta in ViewBag.UltimasOfertas.Ofertas)
+                                {
+                                    <div class="col-md-6 col-lg-4 mb-4">
+                                        <div class="card h-100 shadow-hover">
+                                            <div class="card-body">
+                                                <h5 class="card-title text-primary">@oferta.Titulo</h5>
+                                                <h6 class="card-subtitle mb-2 text-muted">
+                                                    <i class="fas fa-building me-1"></i>
+                                                    @oferta.NombreReclutador
+                                                </h6>
+                                                <p class="card-text">
+                                                    @(oferta.Descripcion.Length > 100
+                                                        ? oferta.Descripcion.Substring(0, 100) + "..."
+                                                        : oferta.Descripcion)
+                                                </p>
+                                                <div class="mb-3">
+                                                    <span class="badge bg-info me-2">
+                                                        <i class="fas fa-map-marker-alt me-1"></i>
+                                                        @oferta.Ubicacion
+                                                    </span>
+                                                    <span class="badge bg-secondary">
+                                                        <i class="fas fa-clock me-1"></i>
+                                                        @oferta.TipoContrato
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="card-footer bg-white">
+                                                <a asp-controller="JobOffers" asp-action="Details"
+                                                   asp-route-id="@oferta.IdOferta"
+                                                   class="btn btn-primary w-100">
+                                                    <i class="fas fa-info-circle me-2"></i>Ver Detalles
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center py-4">
+                                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                                <h5>No hay ofertas disponibles</h5>
+                                <p class="text-muted">Vuelve más tarde para ver nuevas oportunidades</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inicializar tooltips
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Actualizar automáticamente las ofertas cada 1 minutos
+            if (@Json.Serialize(currentUser?.Rol != "Reclutador")) {
+                setInterval(function() {
+                    PortalEmpleo.ajaxRequest('/JobOffers/GetLatest', {
+                        showLoader: false,
+                        successCallback: function(response) {
+                            if (response.exito) {
+                                // Actualizar la sección de ofertas
+                                const ofertasContainer = document.querySelector('.row');
+                                // Implementar lógica de actualización
+                            }
+                        }
+                    });
+                }, 60000); // 1 minutos
+            }
+        });
+    </script>
+}

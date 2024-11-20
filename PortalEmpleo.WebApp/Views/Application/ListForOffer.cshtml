@@ -1,0 +1,157 @@
+﻿@model PortalEmpleo.WebApp.Models.ViewModels.Applications.ApplicationListViewModel
+
+@{
+    ViewData["Title"] = "Postulaciones Recibidas";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid px-4 fade-in">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-controller="JobOffers" asp-action="MyOffers">Mis Ofertas</a></li>
+                    <li class="breadcrumb-item active">Postulaciones</li>
+                </ol>
+            </nav>
+            <h2 class="mb-1">@ViewData["Title"]</h2>
+            <p class="text-muted mb-0">
+                Gestiona las postulaciones recibidas para tu oferta
+            </p>
+        </div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card bg-primary text-white shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50">Total de Postulaciones</h6>
+                            <h3 class="mb-0">@Model.TotalRegistros</h3>
+                        </div>
+                        <i class="fas fa-users fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card bg-info text-white shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50">Postulaciones Hoy</h6>
+                            <h3 class="mb-0">@Model.Postulaciones.Count(p => p.FechaPostulacion.Date == DateTime.Today)</h3>
+                        </div>
+                        <i class="fas fa-calendar-day fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Postulaciones -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">Listado de Postulaciones</h5>
+        </div>
+        <div class="card-body p-0">
+            @if (Model.Postulaciones != null && Model.Postulaciones.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Candidato</th>
+                                <th>Email</th>
+                                <th>Fecha de Postulación</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var postulacion in Model.Postulaciones)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-user text-primary me-2"></i>
+                                            @postulacion.Nombre
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <a href="mailto:@postulacion.Email" class="text-decoration-none">
+                                            <i class="fas fa-envelope text-info me-2"></i>
+                                            @postulacion.Email
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-clock text-success me-2"></i>
+                                        @postulacion.FechaPostulacion.ToString("dd/MM/yyyy HH:mm")
+                                    </td>
+                                    <td class="text-center">
+                                        <a href="mailto:@postulacion.Email"
+                                           class="btn btn-sm btn-primary"
+                                           data-bs-toggle="tooltip"
+                                           title="Contactar candidato">
+                                            <i class="fas fa-envelope"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Paginación -->
+                @if (Model.TotalPaginas > 1)
+                {
+                    <div class="card-footer bg-white">
+                        <nav aria-label="Paginación">
+                            <ul class="pagination justify-content-center mb-0">
+                                @for (int i = 1; i <= Model.TotalPaginas; i++)
+                                {
+                                    <li class="page-item @(i == Model.Pagina ? "active" : "")">
+                                        <a class="page-link"
+                                           asp-action="ListForOffer"
+                                           asp-route-idOferta="@Model.IdOferta"
+                                           asp-route-pagina="@i">@i</a>
+                                    </li>
+                                }
+                            </ul>
+                        </nav>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="fas fa-user-friends fa-3x text-muted mb-3"></i>
+                    <h5>No hay postulaciones aún</h5>
+                    <p class="text-muted mb-0">
+                        Cuando los candidatos se postulen, aparecerán aquí.
+                    </p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a asp-controller="JobOffers" asp-action="MyOffers" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Volver a Mis Ofertas
+        </a>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inicializar tooltips
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+    </script>
+}

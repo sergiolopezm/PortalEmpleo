@@ -1,0 +1,228 @@
+﻿@model PortalEmpleo.WebApp.Models.ViewModels.JobOffers.JobOfferListViewModel
+
+@{
+    ViewData["Title"] = "Mis Ofertas";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid px-4 fade-in">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">@ViewData["Title"]</h2>
+            <p class="text-muted mb-0">
+                Gestiona tus ofertas de empleo publicadas
+            </p>
+        </div>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="fas fa-plus-circle me-2"></i>Nueva Oferta
+        </a>
+    </div>
+
+    <!-- Estadísticas Card -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50">Total de Ofertas</h6>
+                            <h3 class="mb-0">@Model.TotalRegistros</h3>
+                        </div>
+                        <i class="fas fa-briefcase fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50">Ofertas Activas</h6>
+                            <h3 class="mb-0">@Model.Ofertas.Count(o => o.Estado == "Activa")</h3>
+                        </div>
+                        <i class="fas fa-check-circle fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-info text-white shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50">Ofertas Publicadas Hoy</h6>
+                            <h3 class="mb-0">@Model.Ofertas.Count(o => o.FechaPublicacion.Date == DateTime.Today)</h3>
+                        </div>
+                        <i class="fas fa-calendar-day fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Ofertas -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">Listado de Ofertas</h5>
+        </div>
+        <div class="card-body p-0">
+            @if (Model.Ofertas != null && Model.Ofertas.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Título</th>
+                                <th>Ubicación</th>
+                                <th>Tipo Contrato</th>
+                                <th>Fecha Publicación</th>
+                                <th>Estado</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var oferta in Model.Ofertas)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-briefcase text-primary me-2"></i>
+                                            @oferta.Titulo
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-map-marker-alt text-danger me-1"></i>
+                                        @oferta.Ubicacion
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-file-contract text-info me-1"></i>
+                                        @oferta.TipoContrato
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-calendar-alt text-success me-1"></i>
+                                        @oferta.FechaPublicacion.ToString("dd/MM/yyyy")
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-@(oferta.Estado == "Activa" ? "success" : "secondary")">
+                                            @oferta.Estado
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex justify-content-center gap-2">
+                                            <a asp-controller="Application" asp-action="ListForOffer"
+                                               asp-route-idOferta="@oferta.IdOferta"
+                                               class="btn btn-sm btn-info"
+                                               data-bs-toggle="tooltip"
+                                               title="Ver postulaciones">
+                                                <i class="fas fa-users"></i>
+                                            </a>
+                                            <a asp-action="Edit" asp-route-id="@oferta.IdOferta"
+                                               class="btn btn-sm btn-primary"
+                                               data-bs-toggle="tooltip"
+                                               title="Editar oferta">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a asp-action="Details" asp-route-id="@oferta.IdOferta"
+                                               class="btn btn-sm btn-success"
+                                               data-bs-toggle="tooltip"
+                                               title="Ver detalles">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <button type="button"
+                                                    class="btn btn-sm btn-danger"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#deleteModal-@oferta.IdOferta"
+                                                    title="Eliminar oferta">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+
+                                            <!-- Modal de Eliminación -->
+                                            <div class="modal fade" id="deleteModal-@oferta.IdOferta" tabindex="-1">
+                                                <div class="modal-dialog">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title">Confirmar Eliminación</h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <p>¿Está seguro que desea eliminar la oferta "@oferta.Titulo"?</p>
+                                                            <p class="text-muted mb-0">Esta acción no se puede deshacer.</p>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                                Cancelar
+                                                            </button>
+                                                            <form asp-action="Delete" asp-route-id="@oferta.IdOferta" method="post" class="d-inline">
+                                                                @Html.AntiForgeryToken()
+                                                                <button type="submit" class="btn btn-danger">
+                                                                    <i class="fas fa-trash me-2"></i>Eliminar
+                                                                </button>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Paginación -->
+                @if (Model.TotalPaginas > 1)
+                {
+                    <div class="card-footer bg-white">
+                        <nav aria-label="Paginación">
+                            <ul class="pagination justify-content-center mb-0">
+                                @for (int i = 1; i <= Model.TotalPaginas; i++)
+                                {
+                                    <li class="page-item @(i == Model.Pagina ? "active" : "")">
+                                        <a class="page-link" asp-action="MyOffers" asp-route-page="@i">@i</a>
+                                    </li>
+                                }
+                            </ul>
+                        </nav>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                    <h5>No tienes ofertas publicadas</h5>
+                    <p class="text-muted mb-3">Comienza publicando tu primera oferta de empleo</p>
+                    <a asp-action="Create" class="btn btn-primary">
+                        <i class="fas fa-plus-circle me-2"></i>Crear Nueva Oferta
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inicializar tooltips
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Verificar mensajes TempData
+            const successMessage = @Json.Serialize(TempData["SuccessMessage"]);
+            const errorMessage = @Json.Serialize(TempData["ErrorMessage"]);
+
+            if (successMessage) {
+                PortalEmpleo.showToast(successMessage, 'success');
+            }
+            if (errorMessage) {
+                PortalEmpleo.showToast(errorMessage, 'error');
+            }
+        });
+    </script>
+}
